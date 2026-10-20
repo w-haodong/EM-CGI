@@ -22,6 +22,20 @@ This release includes the framework figure and the model architecture, correctio
 
 Training and evaluation pipelines, dataset preparation and splits, pretrained weights, learned structural priors, experiment logs, ablation scripts, manuscript files and clinical data are not included. This is a core method release, not a complete reproduction package for the manuscript's numerical results. The example uses random weights and an artificial prior and cannot reproduce reported accuracy.
 
+## Dataset
+
+### AASCE (public dataset)
+
+The public coronal-radiograph dataset used in this work is **AASCE**, from the MICCAI 2019 **Accurate Automated Spinal Curvature Estimation** challenge. Our landmark representation uses four vertebral corners for each of 17 vertebrae, giving **68 landmarks per image**.
+
+- [Official AASCE challenge website](https://aasce19.grand-challenge.org/Home/)
+- [Official dataset information and access links](https://aasce19.github.io/#challenge-dataset) — the organizers identify the training dataset as SpineWeb Dataset 16.
+- [Dataset citation guidance](https://aasce19.grand-challenge.org/Paper/)
+
+Obtain images and annotations through the organizers' official access links and follow their usage and citation requirements. Dataset files are not mirrored in this repository. Dataset preparation scripts and experiment-specific splits are not included in this inference-only release.
+
+The private sagittal-radiograph dataset used in the study is separate from AASCE and is not distributed here.
+
 ## Setup and quick start
 
 Use Python 3.10 or later and install PyTorch for your platform. From this repository root:
@@ -71,6 +85,6 @@ The sequence reference stays fixed across clicks. A correction does not guarante
 
 ## Availability and use
 
-No dataset, checkpoint or trained prior is distributed. Real-image inference requires compatible trained parameters and a prior constructed using authorized training data with the same landmark order and coordinate convention. No publication identifier or citation is provided in this initial submission release.
+AASCE is publicly available through the official sources linked above; this repository does not redistribute dataset files. Checkpoints and trained structural priors are not distributed. Real-image inference requires compatible trained parameters and a prior constructed using authorized training data with the same landmark order and coordinate convention. No publication identifier or citation is provided in this initial submission release.
 
 Third-party components retain their original notices. No project-wide license has been assigned in this release; the authors should select one before granting broader reuse rights.
