@@ -8,9 +8,17 @@ EM-CGI uses Evidence-conditioned Feature Modulation (ECFM) and Relation-guided J
 
 EM-CGI combines automatic landmark localization with correction-conditioned visual inference and a constrained displacement solver. Confirmed landmarks act as exact constraints; unconfirmed landmarks are updated using image evidence and learned structural relations.
 
+## Framework overview
+
+![EM-CGI framework: interactive correction, evidence-conditioned feature modulation, and relation-guided joint correction](assets/emcgi-framework.png)
+
+**EM-CGI framework.** Accumulated landmark confirmations guide Evidence-conditioned Feature Modulation (ECFM), which samples and matches local and structural evidence to update localization features. Relation-guided Joint Correction (RJC) combines visual displacements, learned relations and relative corrections while preserving confirmed coordinates exactly.
+
+[View the full-resolution image](assets/emcgi-framework.png) · [Download the PDF](assets/emcgi-framework.pdf)
+
 ## Release scope
 
-This release contains the model architecture, correction evidence and feature modulation, relation weighting, relative correction prediction, and joint constrained localization. A synthetic example exercises automatic prediction and cumulative corrections.
+This release includes the framework figure and the model architecture, correction evidence and feature modulation, relation weighting, relative correction prediction, and joint constrained localization. A synthetic example exercises automatic prediction and cumulative corrections.
 
 Training and evaluation pipelines, dataset preparation and splits, pretrained weights, learned structural priors, experiment logs, ablation scripts, manuscript files and clinical data are not included. This is a core method release, not a complete reproduction package for the manuscript's numerical results. The example uses random weights and an artificial prior and cannot reproduce reported accuracy.
 
