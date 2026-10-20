@@ -13,14 +13,7 @@ EM-CGI performs interactive vertebral landmark correction through two modules:
 
 ## Dataset
 
-**AASCE** is a public coronal X-ray dataset from the MICCAI 2019 Accurate Automated Spinal Curvature Estimation challenge. Each image has **68 landmarks** representing the four corners of **17 vertebrae**.
-
-| Resource | Link |
-| --- | --- |
-| Official dataset page | [AASCE Challenge Dataset](https://aasce19.github.io/#challenge-dataset) |
-| Training data | [SpineWeb — Dataset 16](http://spineweb.digitalimaginggroup.ca/) |
-| Test data | [Download Archive.zip](https://www.dropbox.com/s/6pb78r29yl4s3j6/Archive.zip?dl=0) |
-| Dataset references | [Citation information](https://aasce19.grand-challenge.org/Paper/) |
+[AASCE — SpineWeb Dataset 16](http://spineweb.digitalimaginggroup.ca/)
 
 ## Quick start
 
