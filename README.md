@@ -1,99 +1,58 @@
 # EM-CGI: Evidence-Modulated Constrained Graph Inference
 
-Core model and inference-only release for the initial manuscript submission.
+EM-CGI performs interactive vertebral landmark correction through two modules:
 
-**Training code is intentionally withheld while the manuscript is unpublished. This repository does not provide training entry points, optimization loops, loss functions, training recipes, or dataset preparation scripts.**
+- **Evidence-conditioned Feature Modulation (ECFM):** uses landmark confirmations to sample and match local and structural evidence, then update localization features.
+- **Relation-guided Joint Correction (RJC):** combines visual displacements and learned landmark relations to jointly update coordinates while preserving confirmed positions.
 
-EM-CGI uses Evidence-conditioned Feature Modulation (ECFM) and Relation-guided Joint Correction (RJC) for interactive vertebral landmark correction.
+## Framework
 
-EM-CGI combines automatic landmark localization with correction-conditioned visual inference and a constrained displacement solver. Confirmed landmarks act as exact constraints; unconfirmed landmarks are updated using image evidence and learned structural relations.
+![EM-CGI framework](assets/emcgi-framework.png)
 
-## Framework overview
-
-![EM-CGI framework: interactive correction, evidence-conditioned feature modulation, and relation-guided joint correction](assets/emcgi-framework.png)
-
-**EM-CGI framework.** Accumulated landmark confirmations guide Evidence-conditioned Feature Modulation (ECFM), which samples and matches local and structural evidence to update localization features. Relation-guided Joint Correction (RJC) combines visual displacements, learned relations and relative corrections while preserving confirmed coordinates exactly.
-
-[View the full-resolution image](assets/emcgi-framework.png) · [Download the PDF](assets/emcgi-framework.pdf)
-
-## Release scope
-
-This release includes the framework figure and the model architecture, correction evidence and feature modulation, relation weighting, relative correction prediction, and joint constrained localization. A synthetic example exercises automatic prediction and cumulative corrections.
-
-Training and evaluation pipelines, dataset preparation and splits, pretrained weights, learned structural priors, experiment logs, ablation scripts, manuscript files and clinical data are not included. This is a core method release, not a complete reproduction package for the manuscript's numerical results. The example uses random weights and an artificial prior and cannot reproduce reported accuracy.
+[Full-resolution PNG](assets/emcgi-framework.png) · [PDF](assets/emcgi-framework.pdf)
 
 ## Dataset
 
-### AASCE (public dataset)
+**AASCE** is a public coronal X-ray dataset from the MICCAI 2019 Accurate Automated Spinal Curvature Estimation challenge. Each image has **68 landmarks** representing the four corners of **17 vertebrae**.
 
-The public coronal-radiograph dataset used in this work is **AASCE**, from the MICCAI 2019 **Accurate Automated Spinal Curvature Estimation** challenge. Our landmark representation uses four vertebral corners for each of 17 vertebrae, giving **68 landmarks per image**.
-
-**Dataset access / download:**
-
-| Data | Access link |
+| Resource | Link |
 | --- | --- |
-| Training data: SpineWeb Dataset 16 | [Open the SpineWeb dataset portal](http://spineweb.digitalimaginggroup.ca/) — select Dataset 16 |
-| Challenge test data | [Download / view Archive.zip on Dropbox](https://www.dropbox.com/s/6pb78r29yl4s3j6/Archive.zip?dl=0) |
-| Official source of the dataset links | [AASCE Challenge Dataset](https://aasce19.github.io/#challenge-dataset) |
+| Official dataset page | [AASCE Challenge Dataset](https://aasce19.github.io/#challenge-dataset) |
+| Training data | [SpineWeb — Dataset 16](http://spineweb.digitalimaginggroup.ca/) |
+| Test data | [Download Archive.zip](https://www.dropbox.com/s/6pb78r29yl4s3j6/Archive.zip?dl=0) |
+| Dataset references | [Citation information](https://aasce19.grand-challenge.org/Paper/) |
 
-The test-data link above is the download linked by the official AASCE website. The SpineWeb portal returned a server error during our latest check; if it is temporarily unavailable, consult the official challenge page for access guidance. The public challenge download is not a distribution of this project's experiment-specific splits.
+## Quick start
 
-- [Official AASCE challenge website](https://aasce19.grand-challenge.org/Home/)
-- [Dataset citation guidance](https://aasce19.grand-challenge.org/Paper/)
-
-Obtain images and annotations through the organizers' official access links and follow their usage and citation requirements. Dataset files are not mirrored in this repository. Dataset preparation scripts and experiment-specific splits are not included in this inference-only release.
-
-The private sagittal-radiograph dataset used in the study is separate from AASCE and is not distributed here.
-
-## Setup and quick start
-
-Use Python 3.10 or later and install PyTorch for your platform. From this repository root:
+Python 3.10+ and PyTorch 2.0+.
 
 ```sh
 python -m pip install -r requirements.txt
 python -m examples.synthetic_demo
 ```
 
-The example runs on CPU without downloads or external data. Its reduced image size and four landmarks are solely for checking the interface. Default model settings use 68 landmarks and an image size of 1024 × 512 (height × width).
+The CPU example uses synthetic inputs, random weights and an artificial prior to demonstrate automatic localization and cumulative landmark corrections. Default model settings use 68 landmarks and a 1024 × 512 image (height × width).
 
-## Repository structure
+## Code structure
 
 ```text
 emcgi/
-  config.py              Model architecture and inference settings
-  compatibility.py       Model schema and state validation
+  config.py              Architecture and inference settings
+  compatibility.py       Model state validation
   models/
     model.py             Automatic and interactive forward paths
-    backbone.py          Multi-resolution visual backbone
-    visual.py            Shared visual encoder and heatmap head
-    evidence.py          Candidate search, matching and evidence modulation
-    interaction.py       Correction-conditioned feature and relation updates
-    relations.py         Edge weights and relative correction prediction
+    backbone.py          Multi-resolution backbone
+    visual.py            Visual encoder and heatmap head
+    evidence.py          Evidence sampling, matching and modulation
+    interaction.py       Correction-conditioned feature updates
+    relations.py         Relation weights and relative corrections
     geometry.py          Heatmap decoding and constrained localization
-    residual.py          Displacement system and exact click constraints
+    residual.py          Joint displacement solver
 examples/
-  synthetic_demo.py      Data-free cumulative correction example
+  synthetic_demo.py      Synthetic inference example
+assets/
+  emcgi-framework.png    Framework figure
+  emcgi-framework.pdf    Framework figure in PDF
 ```
 
-See [the core API documentation](docs/CORE_API.md) for tensor conventions and interaction history. See [third-party notices](THIRD_PARTY_NOTICES.md) for backbone attribution.
-
-## Method
-
-ECFM is implemented in `evidence.py` and `interaction.py`; RJC uses `relations.py`, `geometry.py` and `residual.py`.
-
-The shared visual encoder predicts landmark heatmaps. Local heatmap decoding estimates positions and unary precisions. During an interaction sequence, automatic positions, unary means and precisions define a fixed detached reference. Confirmed corrections condition candidate search and visual feature updates. Learned positive edge weights and relative corrections enter the displacement objective:
-
-```text
-E(delta) = sum_i ||delta_i - v_i||²_(U0_i)
-         + lambda_int sum_(i,j) ||delta_i - delta_j - d_ij||²_(s_ij W_ij)
-p = p0 + delta
-subject to delta_c = confirmed_c - p0_c for confirmed landmarks c
-```
-
-The sequence reference stays fixed across clicks. A correction does not guarantee improvement at every unconfirmed landmark.
-
-## Availability and use
-
-AASCE is publicly available through the official sources linked above; this repository does not redistribute dataset files. Checkpoints and trained structural priors are not distributed. Real-image inference requires compatible trained parameters and a prior constructed using authorized training data with the same landmark order and coordinate convention. No publication identifier or citation is provided in this initial submission release.
-
-Third-party components retain their original notices. No project-wide license has been assigned in this release; the authors should select one before granting broader reuse rights.
+[Core API documentation](docs/CORE_API.md) · [Third-party notices](THIRD_PARTY_NOTICES.md)
