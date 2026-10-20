@@ -28,8 +28,17 @@ Training and evaluation pipelines, dataset preparation and splits, pretrained we
 
 The public coronal-radiograph dataset used in this work is **AASCE**, from the MICCAI 2019 **Accurate Automated Spinal Curvature Estimation** challenge. Our landmark representation uses four vertebral corners for each of 17 vertebrae, giving **68 landmarks per image**.
 
+**Dataset access / download:**
+
+| Data | Access link |
+| --- | --- |
+| Training data: SpineWeb Dataset 16 | [Open the SpineWeb dataset portal](http://spineweb.digitalimaginggroup.ca/) — select Dataset 16 |
+| Challenge test data | [Download / view Archive.zip on Dropbox](https://www.dropbox.com/s/6pb78r29yl4s3j6/Archive.zip?dl=0) |
+| Official source of the dataset links | [AASCE Challenge Dataset](https://aasce19.github.io/#challenge-dataset) |
+
+The test-data link above is the download linked by the official AASCE website. The SpineWeb portal returned a server error during our latest check; if it is temporarily unavailable, consult the official challenge page for access guidance. The public challenge download is not a distribution of this project's experiment-specific splits.
+
 - [Official AASCE challenge website](https://aasce19.grand-challenge.org/Home/)
-- [Official dataset information and access links](https://aasce19.github.io/#challenge-dataset) — the organizers identify the training dataset as SpineWeb Dataset 16.
 - [Dataset citation guidance](https://aasce19.grand-challenge.org/Paper/)
 
 Obtain images and annotations through the organizers' official access links and follow their usage and citation requirements. Dataset files are not mirrored in this repository. Dataset preparation scripts and experiment-specific splits are not included in this inference-only release.
