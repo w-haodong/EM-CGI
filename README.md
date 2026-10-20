@@ -13,7 +13,7 @@ EM-CGI performs interactive vertebral landmark correction through two modules:
 
 ## Dataset
 
-[AASCE — SpineWeb Dataset 16](http://spineweb.digitalimaginggroup.ca/)
+[AASCE (SpineWeb Dataset 16)](http://spineweb.digitalimaginggroup.ca/)
 
 ## Quick start
 
