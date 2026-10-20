@@ -1,8 +1,6 @@
 # Third-party notices
 
-`emcgi/models/backbone.py` retains the Microsoft copyright and MIT license attribution present in the source implementation, naming Bin Xiao, Tianheng Cheng and Yang Zhao. The file is an adapted multi-resolution backbone; the original header is preserved. This release does not assign ownership of that upstream code to the EM-CGI authors.
-
-The standard MIT permission and warranty text is included below for the attributed backbone component only. It does not license the remaining project code.
+`emcgi/models/backbone.py` adapts a Microsoft MIT-licensed backbone and retains its attribution to Bin Xiao, Tianheng Cheng and Yang Zhao. The following notice applies to that component.
 
 Copyright (c) Microsoft
 

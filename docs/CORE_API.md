@@ -1,44 +1,58 @@
 # Core API
 
-## Construction
+## Model
 
 ```python
 from emcgi import EMCGI, model_config
+
 cfg = model_config(points=68, image_hw=(1024, 512))
-model = EMCGI(cfg, prior)
+model = EMCGI(cfg, prior).eval()
 ```
 
-`prior` contains `count` (K), `edges` (E 脳 2 landmark indices), `means` (E 脳 2 relative mean positions), and `precisions` (E 脳 2 脳 2 positive definite matrices). For edge (i, j), means represent p_i - p_j. All positions use normalized (x, y) coordinates; convert pixels with (x / W, y / H), and convert back with (x * W, y * H). Precision matrices use this same normalized coordinate system. Use at least one valid edge and match the landmark count and order. The example's artificial chain is not an anatomical prior.
-
-## Inputs and outputs
-
-`image`: float tensor B 脳 3 脳 H 脳 W, values in [0, 1]. The model internally maps it to [-1, 1]. Input images must be single-channel grayscale after application-specific preprocessing. The release does not implement the original dataset preprocessing. Use dimensions divisible by 32 for the backbone.
-
-`model(image)` returns `points` (B 脳 K 脳 2), `logits` (B 脳 K 脳 h 脳 w under independent heatmaps), unary estimates, a detached `reference`, and auxiliary diagnostics. Solver coordinates are double precision and are not globally clamped to [0, 1].
-
-`model(image, history)` performs a cumulative correction. `history` contains:
+`prior` defines the landmark graph:
 
 | Key | Shape | Meaning |
 | --- | --- | --- |
-| current | B 脳 K 脳 2 | Most recent output coordinates |
-| old | B 脳 K 脳 2 | Coordinates immediately before each landmark was confirmed |
-| confirmed | B 脳 K 脳 2 | Confirmed positions; initialize unconfirmed entries to zero |
-| clicked | B 脳 K boolean | Cumulative confirmed-landmark mask |
-| reference_q, reference_rhs | B 脳 2K 脳 2K; B 脳 2K | Fixed automatic quadratic reference |
-| automatic_points | B 脳 K 脳 2 | Automatic positions p0 |
-| automatic_unary_mean | B 脳 K 脳 2 | Initial unary means |
-| automatic_precision | B 脳 K 脳 2 脳 2 | Initial unary precisions |
+| count | Integer K | Number of landmarks |
+| edges | E x 2 | Landmark index pairs (i, j); at least one edge |
+| means | E x 2 | Mean relative coordinates p_i - p_j |
+| precisions | E x 2 x 2 | Positive definite edge precision matrices |
 
-Copy all reference fields directly from the initial `automatic['reference']`. Initialize `current` and `old` from automatic points. Before adding a new click, copy that landmark's current position into `old`, set its confirmed coordinate, and set its clicked flag. Preserve all previous confirmations. After each forward call, update `current` from the returned points. Keep the original reference throughout the sequence. All tensors and the model must share a device. Keep `current`, `old` and `confirmed` in float32 to match visual features; cast solver outputs to float32 when updating `current`. Preserve the reference tensors in their returned precision.
+Coordinates use normalized (x, y): `(x_px / W, y_px / H)`. Prior means and precisions use the same coordinate system and landmark order.
 
-The optional `prior_transform` is B 脳 2 脳 2 and transforms the structural prior under a consistent affine coordinate transformation. It must be consistent with the image and coordinate transformation; it does not independently resize image coordinates.
+## Inference
 
-## Parameters and checkpoints
+Use `torch.no_grad()` with the model in evaluation mode.
 
-`model_config` retains the architecture schema required by this implementation. Model parameters start randomly initialized. This release deliberately omits the internal predecessor-checkpoint initialization helper. A compatible state dictionary can be loaded using `model.load_state_dict(state_dict)`; no checkpoint is supplied and no result reproduction is claimed.
+- **Input:** float32 grayscale image, shape `B x 1 x H x W`, values in `[0, 1]`. H and W should be divisible by 32.
+- **Automatic localization:** `automatic = model(image)`.
+- **Interactive correction:** `corrected = model(image, history)`.
+- **Outputs:** `points` (`B x K x 2`), `logits` (`B x K x h x w` with independent heatmaps), unary estimates, `reference` and diagnostics. Points use float64 and may fall outside `[0, 1]`.
 
-The public class is `EMCGI`. Internal configuration identifiers (`SILC` and `v132_silc_joint_residual_v2`) retain the original implementation schema for state validation; they refer to this implementation, not a separate released method.
+## Interaction history
 
-## Inference-only scope
+| Key | Shape | Meaning |
+| --- | --- | --- |
+| current | B x K x 2 | Latest output coordinates |
+| old | B x K x 2 | Position immediately before each landmark was confirmed |
+| confirmed | B x K x 2 | Confirmed coordinates; zero for unconfirmed entries |
+| clicked | B x K, boolean | Cumulative confirmation mask |
+| reference_q | B x 2K x 2K | Fixed automatic quadratic matrix |
+| reference_rhs | B x 2K | Fixed automatic right-hand side |
+| automatic_points | B x K x 2 | Initial automatic positions |
+| automatic_unary_mean | B x K x 2 | Initial unary means |
+| automatic_precision | B x K x 2 x 2 | Initial unary precisions |
 
-Call `model.eval()` and use `torch.no_grad()` for inference, as shown in the example. Training-specific BatchNorm policy, losses, optimization, data loaders and experiment configuration are omitted. The released architecture and settings are sufficient for the synthetic interface example, not for reconstructing the unpublished training workflow.
+1. Copy reference fields from `automatic['reference']`; initialize `current` and `old` from automatic points.
+2. For a new confirmation, copy that landmark's current position into `old`, set `confirmed` and mark `clicked`.
+3. Run `model(image, history)`, then update `current` from the returned points.
+
+Keep prior confirmations and the initial reference throughout the sequence. Use float32 for `current`, `old` and `confirmed`; preserve reference dtypes. Keep the model and tensors on the same device.
+
+The optional `prior_transform` (`B x 2 x 2`) applies a linear transformation to the structural prior, consistent with the image-coordinate transformation.
+
+## Model weights
+
+Load compatible parameters with `model.load_state_dict(state_dict)`.
+
+See [the synthetic example](../examples/synthetic_demo.py) for a complete interaction sequence.
